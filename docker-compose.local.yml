@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  airway_reservation:
+    build:
+      context: .
+      dockerfile: ./containers/airway_reservation/Dockerfile.local
+    command: "air -c /app/containers/airway_reservation/.air.toml"
+    ports:
+      - 8088:8088
+    volumes:
+      - ./:/app
+    env_file:
+      - .env.local
+    depends_on:
+      - postgres
+    networks:
+      - airway_reservation
+    image: airway_reservation-app
+    platform: linux/x86_64
+    entrypoint:
+      - dockerize
+      - -timeout
+      - 60s
+      - -wait
+      - tcp://aw-postgres:5432
+  postgres:
+    image: postgis/postgis:15-3.4
+    hostname: postgres
+    container_name: aw-postgres
+    ports:
+      - 5432:5432
+    networks:
+      - airway_reservation
+    env_file:
+      - internal/pkg/config/${APP_ENV}.yml
+    restart: always
+networks:
+  airway_reservation:
